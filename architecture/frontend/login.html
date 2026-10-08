@@ -1,0 +1,19 @@
+<!-- frontend/login.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>StegaVault - Login</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="login-container">
+        <h2>Authentication</h2>
+        <!-- Concept: Calls POST /api/auth/login via fetch() in app.js -->
+        <input type="email" id="email" placeholder="Email">
+        <input type="password" id="password" placeholder="Password">
+        <button onclick="loginAPI()">Login</button>
+    </div>
+    <script src="js/app.js"></script>
+</body>
+</html>
