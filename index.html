@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StegaVault</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Secret Toggle (Demonstration: Trusted User View vs Untrusted Physical Storage View) -->
+    <div id="secret-toggle" class="secret-toggle">
+        <span id="btn-mode-u" class="secret-btn active" onclick="setMode('U')" title="Trusted User View"></span>
+        <span id="btn-mode-a" class="secret-btn" onclick="setMode('A')" title="Untrusted Device / Disk Storage View"></span>
+    </div>
+
+    <!-- Passphrase Prompt Modal (Used for initial session unlock or decrypting untrusted access) -->
+    <div id="first-time-modal" class="modal hidden">
+        <div class="auth-modal-card">
+            <div class="logo">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                <span>StegaVault Security</span>
+            </div>
+            <h3 id="auth-modal-title" style="margin-top: 1rem; margin-bottom: 0.5rem;">Vault Passphrase</h3>
+            <p id="auth-modal-desc" class="subtitle" style="font-size:0.9rem; margin-bottom: 1.2rem;">
+                Enter your passphrase to authenticate and decrypt your vault notes.
+            </p>
+            <div class="input-group">
+                <label>Vault Passphrase</label>
+                <input type="password" id="setup-passphrase" placeholder="Enter master passphrase">
+            </div>
+            <div class="form-actions" style="margin-bottom: 1.2rem;">
+                <label class="remember" style="font-size: 0.85rem;">
+                    <input type="checkbox" id="trust-device-check" checked> Remember in session (Trusted Session)
+                </label>
+            </div>
+            <button class="primary-btn" id="btn-submit-setup" onclick="submitAuthSetup()" style="width:100%;">Unlock Vault</button>
+        </div>
+    </div>
+
+    <!-- Carrier Selection & Save Modal (Appears when hitting 'Save Note') -->
+    <div id="carrier-modal" class="modal hidden">
+        <div class="auth-modal-card carrier-modal-card">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <div class="sidebar-logo-icon" style="width:24px; height:24px; margin:0;"></div>
+                    <h3 style="font-size:1.15rem; margin:0;">Choose Carrier Image</h3>
+                </div>
+                <button type="button" onclick="closeCarrierModal()" style="background:none; border:none; font-size:1.4rem; cursor:pointer; color:var(--text-light); line-height:1;">&times;</button>
+            </div>
+            
+            <p class="subtitle" style="font-size:0.88rem; margin-bottom:1.2rem; line-height:1.45;">
+                Select an image carrier to embed your note into using invisible adaptive steganography.
+            </p>
+
+            <div style="margin-bottom:0.6rem; display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:0.85rem; font-weight:600; color:var(--text-muted);">Available Carriers:</span>
+                <span id="selected-carrier-name" style="font-size:0.85rem; font-weight:600; color:var(--primary-color);">sunset.jpg</span>
+            </div>
+
+            <!-- Grid of carrier thumbnails -->
+            <div class="carrier-grid" id="carrier-thumbnails">
+                <!-- Dynamically populated -->
+            </div>
+
+            <div style="display:flex; gap:10px; margin-top:1.5rem; justify-content:flex-end;">
+                <button class="standard-action-btn" onclick="closeCarrierModal()" style="padding:8px 16px;">Cancel</button>
+                <button class="standard-action-btn primary-btn" id="btn-confirm-save-note" onclick="confirmSaveNote()" style="padding:8px 20px; font-weight:600;">
+                    Confirm & Save
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Screen -->
+    <div id="login-screen" class="screen">
+        <div class="login-split">
+            <!-- Left Form Side -->
+            <div class="login-left-form">
+                <div class="login-form-container">
+                    <div class="brand-pill">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+                        <span>StegaVault</span>
+                    </div>
+
+                    <h1 class="login-hero-title">Welcome back!</h1>
+                    <p class="subtitle">Simplify your thoughts and keep your notes private with StegaVault. Secure by design.</p>
+
+                    <div class="input-rounded-group">
+                        <input type="email" id="email" value="demo@stegavault.com" placeholder="Username or email" autocomplete="username">
+                    </div>
+
+                    <div class="input-rounded-group password-group">
+                        <input type="password" id="password" value="Demo@2026Secure" placeholder="Password" autocomplete="current-password">
+                        <button type="button" class="eye-toggle-btn" onclick="togglePasswordVisibility()" title="Toggle password visibility">
+                            <svg id="eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                <line x1="1" y1="1" x2="23" y2="23"></line>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="forgot-wrapper">
+                        <a href="#" class="forgot-link">Forgot Password?</a>
+                    </div>
+
+                    <button class="pill-login-btn" onclick="login()">Login</button>
+
+                    <div class="divider-text">
+                        <span>or continue with</span>
+                    </div>
+
+                    <div class="social-auth-row">
+                        <button type="button" class="social-circle-btn" title="Continue with Google" onclick="login()">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12.24 10.285V13.82h5.88c-.24 1.485-1.74 4.365-5.88 4.365-3.54 0-6.435-2.925-6.435-6.525s2.895-6.525 6.435-6.525c2.01 0 3.36.855 4.14 1.59l2.805-2.7C17.43 2.37 15.06 1.5 12.24 1.5 6.42 1.5 1.71 6.21 1.71 12.03s4.71 10.53 10.53 10.53c6.09 0 10.125-4.275 10.125-10.29 0-.69-.075-1.215-.165-1.785H12.24z"/>
+                            </svg>
+                        </button>
+                        <button type="button" class="social-circle-btn" title="Continue with Apple" onclick="login()">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.89c.66-.82 1.11-1.96.99-3.1-.97.04-2.12.65-2.8 1.46-.59.69-1.12 1.83-.98 2.95 1.08.08 2.14-.54 2.79-1.31z"/>
+                            </svg>
+                        </button>
+                        <button type="button" class="social-circle-btn" title="Continue with GitHub" onclick="login()">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="register-prompt">
+                        <span>Not a member?</span> <a href="#" onclick="alert('Registration is automatic in demo mode. Enter any email and password.'); return false;">Register now</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Visual Illustration Card -->
+            <div class="login-right-visual">
+                <div class="visual-inner-card">
+                    <img src="images/login_illustration.svg" alt="StegaVault Note Flow Illustration" class="visual-illustration-img">
+                    <h3 class="visual-tagline">Make your notes easier, peaceful and protected</h3>
+                    <p class="visual-subtext">with StegaVault's background security</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Main Screen (Normal Note-taking interface) -->
+    <div id="user-screen" class="screen hidden">
+        <div class="sidebar">
+            <div class="sidebar-header" onclick="showUserView('all-notes')" style="cursor:pointer;" title="Go to All Notes">
+                <div class="sidebar-logo-icon"></div>
+                <div>
+                    <h2>StegaVault</h2>
+                    <p class="user-name" id="sidebar-user-display">Demo User</p>
+                </div>
+            </div>
+            
+            <button class="nav-btn create-note-btn" onclick="showUserView('create-note')">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+                <span>Create Note</span>
+            </button>
+            
+            <div class="sidebar-search">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                <input type="text" id="search-input" placeholder="Search notes..." onkeyup="filterSearch()">
+            </div>
+            
+            <div class="folders-section">
+                <div class="folders-header" onclick="toggleFolders()" style="cursor:pointer;">
+                    <div class="folder-title">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                        <span>Folders</span>
+                    </div>
+                    <span class="folder-actions">
+                        <span onclick="event.stopPropagation(); createNewFolder()" title="New Folder" style="padding:0 5px; font-weight:bold; font-size:1.2rem;">+</span>
+                        <span id="folder-caret" style="display:inline-block; transition:transform 0.2s; margin-left:5px;">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+                        </span>
+                    </span>
+                </div>
+                <ul class="folder-list" id="sidebar-folder-list">
+                    <!-- Folders injected here -->
+                </ul>
+            </div>
+
+            <!-- Bin (Trash) Section with 15-day auto-purge policy -->
+            <button class="nav-btn bin-nav-btn" id="btn-nav-bin" onclick="showBin()" title="Deleted notes kept for 15 days">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    <line x1="10" y1="11" x2="10" y2="17"></line>
+                    <line x1="14" y1="11" x2="14" y2="17"></line>
+                </svg>
+                <span>Bin</span>
+                <span id="bin-count-badge" class="bin-badge hidden">0</span>
+            </button>
+
+            <div class="spacer"></div>
+
+            <button class="nav-btn" onclick="toggleDarkMode(event)" id="btn-dark-mode">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+                <span id="dark-mode-label">Dark Mode</span>
+            </button>
+            <button class="nav-btn logout" onclick="logout()">Logout</button>
+        </div>
+        
+        <div class="main-content-wrapper">
+            <!-- All Notes View -->
+            <div class="main-content" id="view-all-notes">
+                <div class="header flex-header">
+                    <h2 id="current-view-title">My Notes</h2>
+                    <div class="time-filters" id="time-filters-container">
+                        <button class="time-btn active" onclick="setTimeFilter('Today', this)">Today</button>
+                        <button class="time-btn" onclick="setTimeFilter('This Week', this)">This Week</button>
+                        <button class="time-btn" onclick="setTimeFilter('This Month', this)">This Month</button>
+                        <button class="time-btn" onclick="setTimeFilter('All', this)">All</button>
+                    </div>
+                    <div id="bin-actions-container" class="hidden" style="margin-left:auto; display:flex; gap:10px; align-items:center;">
+                        <button class="standard-action-btn danger-btn" onclick="emptyBin()" style="font-size:0.82rem; padding:6px 12px;">Empty Bin</button>
+                    </div>
+                </div>
+                <div class="notes-cards-container" id="notes-list">
+                    <!-- Notes injected here -->
+                </div>
+            </div>
+
+            <!-- Note Editor View with Working Carrier Selection & Adaptive Stego -->
+            <div class="main-content hidden" id="view-create-note">
+                <div class="header" style="display:flex; justify-content:space-between; align-items:center;">
+                    <h2 id="editor-title-display">Create Note</h2>
+                    <div id="note-save-status" class="note-status-indicator">Protected</div>
+                </div>
+                
+                <div class="editor-toolbar">
+                    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                        <!-- Basic formatting -->
+                        <button title="Bold (Ctrl+B)" onclick="document.execCommand('bold', false, null)"><b>B</b></button>
+                        <button title="Italic (Ctrl+I)" onclick="document.execCommand('italic', false, null)"><i>I</i></button>
+                        <button title="Underline (Ctrl+U)" onclick="document.execCommand('underline', false, null)"><u>U</u></button>
+                        <div class="toolbar-divider"></div>
+
+                        <!-- Reactive Font Size Dropdown -->
+                        <div class="font-size-picker-wrapper" title="Font Size">
+                            <select id="editor-font-size" class="toolbar-select" onchange="changeFontSize(this.value)">
+                                <option value="" disabled selected>Size</option>
+                                <option value="12px">12px</option>
+                                <option value="14px">14px</option>
+                                <option value="16px">16px</option>
+                                <option value="18px">18px</option>
+                                <option value="22px">22px</option>
+                                <option value="26px">26px</option>
+                                <option value="32px">32px</option>
+                            </select>
+                        </div>
+
+                        <!-- Reactive Font Color Wheel / Picker -->
+                        <div class="color-picker-wrapper" title="Text Color">
+                            <label for="editor-text-color" class="color-picker-label">
+                                <span class="color-icon-A">A</span>
+                                <span id="color-bar-indicator" class="color-bar-indicator"></span>
+                            </label>
+                            <input type="color" id="editor-text-color" value="#111315" class="hidden-color-input" oninput="changeTextColor(this.value)">
+                        </div>
+
+                        <div class="toolbar-divider"></div>
+                        
+                        <!-- Insert dropdown -->
+                        <div class="dropdown">
+                            <button class="dropbtn">Insert ▾</button>
+                            <div class="dropdown-content">
+                                <a href="#" onclick="triggerFileInput('image/*'); return false;">🖼️ Image</a>
+                                <a href="#" onclick="triggerFileInput('video/*'); return false;">🎬 Video</a>
+                                <a href="#" onclick="triggerFileInput('audio/*'); return false;">🎵 Audio</a>
+                                <a href="#" onclick="document.execCommand('insertUnorderedList', false, null); return false;">☑️ List</a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- File input (hidden) -->
+                    <input type="file" id="media-upload" style="display:none;" onchange="handleFileUpload(event)">
+                    
+                    <!-- Standard action buttons: Save & Delete -->
+                    <div style="display:flex; gap:12px; align-items:center; margin-left:auto;">
+                        <button class="standard-action-btn" id="btn-save-note" onclick="openSaveModal()" title="Secure & Save Note">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+                            <span>Save Note</span>
+                        </button>
+                        <button class="standard-action-btn danger-btn" id="btn-delete-icon" onclick="deleteNote()" title="Delete Note" style="display:none;">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                            <span>Delete</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="form-group" style="display:flex; gap:10px; align-items:center;">
+                    <input type="text" id="note-title" placeholder="Title" class="clean-input" style="flex:1;">
+                    <select id="note-folder" class="clean-select">
+                        <option value="General">General</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <div id="note-body" class="clean-textarea" contenteditable="true" data-placeholder="Write your note here..."></div>
+                </div>
+
+                <!-- Stego Artifact Preview (Visible when editing an existing saved note) -->
+                <div id="stego-artifact-preview" class="hidden" style="margin-top:1.5rem; padding:1rem; background:var(--hover-bg); border-radius:12px; display:flex; align-items:center; gap:1rem;">
+                    <img id="stego-preview-thumbnail" src="" style="width:60px; height:60px; object-fit:cover; border-radius:8px; border:1px solid var(--border-color);">
+                    <div>
+                        <div style="font-size:0.85rem; font-weight:600; color:var(--text-color);">Embedded Stego Artifact (Lossless PNG)</div>
+                        <div id="stego-preview-path" style="font-size:0.75rem; color:var(--text-light); word-break:break-all;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Untrusted Storage Screen (Demonstrating Steganographic Security) -->
+    <div id="attacker-screen" class="screen hidden">
+        <div class="attacker-header">
+            <div>
+                <h2>Physical Storage / Photo Library</h2>
+                <p style="font-size:0.85rem; color:var(--text-light); margin-top:4px;">
+                    Untrusted Access Simulation: An adversary inspecting disk only sees ordinary harmless photos. No notes are visible without credentials.
+                </p>
+            </div>
+            <button class="nav-btn logout" onclick="logout()">Logout</button>
+        </div>
+        <div class="attacker-gallery" id="attacker-gallery">
+            <!-- Physical carrier images only -->
+        </div>
+    </div>
+
+    <!-- Image Modal for Inspection -->
+    <div id="image-modal" class="modal hidden" onclick="closeModal()">
+        <img id="modal-img" src="">
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
